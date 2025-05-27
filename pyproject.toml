@@ -1,0 +1,14 @@
+[project]
+name = "qi-py"
+version = "0.1.0"
+description = "Pure Python library for Aldebaran NAO middleware"
+readme = "README.md"
+authors = [
+    { name = "Vincent Palancher", email = "vincent.palancher@aldebaran.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
