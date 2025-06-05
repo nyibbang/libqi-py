@@ -1,9 +1,5 @@
-#
-# Copyright (C) 2010 - 2020 Softbank Robotics Europe
-#
-# -*- coding: utf-8 -*-
-
 import qi_py as qi
+
 
 def test_directlog():
     qi.fatal("test.logger", "log fatal")
