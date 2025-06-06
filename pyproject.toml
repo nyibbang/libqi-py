@@ -7,7 +7,9 @@ authors = [
     { name = "Vincent Palancher", email = "vincent.palancher@gmail.com" },
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "termcolor>=3.1.0",
+]
 
 [build-system]
 requires = ["hatchling"]
