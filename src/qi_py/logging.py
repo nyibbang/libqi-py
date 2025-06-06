@@ -3,6 +3,7 @@ import os
 import sys
 from enum import Enum
 from typing import Any
+from termcolor import colored
 
 __all__ = [
     "SILENT",
@@ -23,39 +24,6 @@ __all__ = [
     "setFilters",
 ]
 
-LOGGER_NAME = "qi"
-
-
-def init_logger():
-    logger = logging.getLogger(LOGGER_NAME)
-    logger.setLevel(logging.INFO)
-    handlers: list[logging.Handler] = []
-
-    def make_stdout_handler():
-        return logging.StreamHandler(sys.stdout)
-
-    match os.environ.get("QI_DEFAULT_LOGHANDLER"):
-        case (None | "logger") as default_handler_env:
-            try:
-                from systemd import journal  # type: ignore
-
-                args = {}
-                syslog_identifier = os.environ.get("QI_SYSLOG_IDENTIFIER")
-                if syslog_identifier is not None:
-                    args["SYSLOG_IDENTIFIER"] = syslog_identifier
-                handlers.append(journal.JournalHandler(**args))
-            except ModuleNotFoundError:
-                if default_handler_env is None:
-                    # No systemd module, fallback to stdout if none was set as environnement variable.
-                    handlers.append(make_stdout_handler())
-        case "stdout":
-            handlers.append(make_stdout_handler())
-    for handler in handlers:
-        logger.addHandler(handler)
-
-
-init_logger()
-
 
 class LogLevel(Enum):
     Silent = 0
@@ -69,12 +37,15 @@ class LogLevel(Enum):
     def to_python_logging_value(self, logger: bool) -> int:
         match self:
             case LogLevel.Silent:
+                # For a logger, a silent level means that it does not log anything from DEBUG to
+                # FATAL, i.e. its logging level is beyond FATAL.
                 if logger:
-                    return logging.CRITICAL + 1
+                    return logging.FATAL + 1
+                # For a log record, a silent level means that it's a lower level than DEBUG.
                 else:
                     return logging.DEBUG - 1
             case LogLevel.Fatal:
-                return logging.CRITICAL
+                return logging.FATAL
             case LogLevel.Error:
                 return logging.ERROR
             case LogLevel.Warning:
@@ -82,12 +53,12 @@ class LogLevel(Enum):
             case LogLevel.Info:
                 return logging.INFO
             case LogLevel.Verbose:
-                return VERBOSE_LEVEL_PYTHON_LOGGING_VALUE
+                return VERBOSE_LEVEL_VALUE
             case LogLevel.Debug:
                 return logging.DEBUG
 
 
-VERBOSE_LEVEL_PYTHON_LOGGING_VALUE = int((logging.INFO + logging.DEBUG) / 2)
+VERBOSE_LEVEL_VALUE = int((logging.INFO + logging.DEBUG) / 2)
 
 SILENT = LogLevel.Silent
 FATAL = LogLevel.Fatal
@@ -96,6 +67,83 @@ WARNING = LogLevel.Warning
 INFO = LogLevel.Info
 VERBOSE = LogLevel.Verbose
 DEBUG = LogLevel.Debug
+
+
+class StdoutFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        return "{level} {date} {tid} {message}".format(
+            level=self.short_level_name(record.levelno),
+            date=self.time(record.created),
+            tid=record.thread,
+            message=record.msg,
+        )
+
+    def formatStack(self, stack_info):
+        return ""
+
+    @staticmethod
+    def short_level_name(level: int) -> str:
+        match level:
+            case logging.FATAL:
+                return colored("[F]", "magenta")
+            case logging.ERROR:
+                return colored("[E]", "red")
+            case logging.WARNING:
+                return colored("[W]", "yellow")
+            case logging.INFO:
+                return colored("[I]", "blue")
+            case value if value == VERBOSE_LEVEL_VALUE:
+                return colored("[V]", "green")
+            case logging.DEBUG:
+                return colored("[D]", "white")
+            case _:
+                return "[?]"
+
+    @staticmethod
+    # created: Time when the LogRecord was created (as returned by time.time_ns() / 1e9).
+    def time(created: float) -> str:
+        return f"{created:.6f}"
+
+
+LOGGER_NAME = "qi"
+
+
+def init_logger():
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.INFO)
+    handler: logging.Handler | None = None
+
+    def make_journald_handler() -> logging.Handler | None:
+        try:
+            from systemd import journal  # type: ignore
+
+            args = {}
+            syslog_identifier = os.environ.get("QI_SYSLOG_IDENTIFIER")
+            if syslog_identifier is not None:
+                args["SYSLOG_IDENTIFIER"] = syslog_identifier
+            return journal.JournalHandler(**args)
+        except ModuleNotFoundError:
+            return None
+
+    def make_stdout_handler():
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(StdoutFormatter())
+        return handler
+
+    match os.environ.get("QI_DEFAULT_LOGHANDLER"):
+        case None:
+            handler = make_journald_handler()
+            if handler is None:
+                handler = make_stdout_handler()
+        case "logger":
+            handler = make_journald_handler()
+        case "stdout":
+            handler = make_stdout_handler()
+    if handler is not None:
+        logger.addHandler(handler)
+
+
+init_logger()
 
 
 def log(level: LogLevel, category: str, message: str | Any, *args):
