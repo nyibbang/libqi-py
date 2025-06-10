@@ -1,4 +1,5 @@
 from typing import Any
+from ._object import Object as _Object
 
 
 class Signature:
