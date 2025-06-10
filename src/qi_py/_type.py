@@ -1,29 +1,10 @@
-class _MetaSignature(type):
-    """MetaSignature"""
-
-    def __str__(self):
-        return self.signature
-
-    def __unicode__(self):
-        return self.signature
-
-    # Support comparing class and instance (Int8 == Int8())
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return other == self.signature
-        return other.signature == self.signature
-
-    def __ne__(self, other):
-        if isinstance(other, str):
-            return other != self.signature
-        return other.signature != self.signature
+from typing import Any
 
 
-# This syntax works for defining metaclass in python2 and python3
-_ToInheritMetaSignature = _MetaSignature("_ToInheritMetaSignature", (object,), {})
+class Signature:
+    def __init__(self, signature):
+        self.signature = signature
 
-
-class _Signature(_ToInheritMetaSignature):
     def __str__(self):
         return self.signature
 
@@ -32,139 +13,84 @@ class _Signature(_ToInheritMetaSignature):
 
     def __eq__(self, other):
         if isinstance(other, str):
-            return other == self.signature()
+            return other == self.signature
         return other.signature == self.signature
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
-class Void(_Signature):
-    """Void Type"""
-
-    signature = "v"
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        return self
 
 
-class Bool(_Signature):
-    """Bool Type"""
+Void = Signature("v")
+"""Void Type"""
 
-    signature = "b"
+Bool = Signature("b")
+"""Bool Type"""
 
+Int8 = Signature("c")
+"""Signed 8 bits Integer Type"""
 
-class Int8(_Signature):
-    """Signed 8 bits Integer Type"""
+UInt8 = Signature("C")
+"""Unsigned 8 bits Integer Type"""
 
-    signature = "c"
+Int16 = Signature("w")
+"""Signed 16 bits Integer Type"""
 
+UInt16 = Signature("W")
+"""Unsigned 16 bits Integer Type"""
 
-class UInt8(_Signature):
-    """Unsigned 8 bits Integer Type"""
+Int32 = Signature("i")
+"""Signed 32 bits Integer Type"""
 
-    signature = "C"
+UInt32 = Signature("I")
+"""Unsigned 32 bits Integer Type"""
 
+Int64 = Signature("l")
+"""Signed 64 bits Integer Type"""
 
-class Int16(_Signature):
-    """Signed 16 bits Integer Type"""
+UInt64 = Signature("L")
+"""Unsigned 64 bits Integer Type"""
 
-    signature = "w"
+Float = Signature("f")
+"""32 bits Floating Point Type"""
 
+Double = Signature("d")
+"""64 bits Floating Point Type"""
 
-class UInt16(_Signature):
-    """Unsigned 16 bits Integer Type"""
-
-    signature = "W"
-
-
-class Int32(_Signature):
-    """Signed 32 bits Integer Type"""
-
-    signature = "i"
-
-
-class UInt32(_Signature):
-    """Unsigned 32 bits Integer Type"""
-
-    signature = "I"
+String = Signature("s")
+"""String Type"""
 
 
-class Int64(_Signature):
-    """Signed 64 bits Integer Type"""
-
-    signature = "l"
-
-
-class UInt64(_Signature):
-    """Unsigned 64 bits Integer Type"""
-
-    signature = "L"
+def List(value):
+    """List Type, a value type need to be specified"""
+    return Signature(f"[{value}]")
 
 
-class Float(_Signature):
-    """32 bits Floating Point Type"""
-
-    signature = "f"
-
-
-class Double(_Signature):
-    """64 bits Floating Point Type"""
-
-    signature = "d"
-
-
-class String(_Signature):
-    """String Type"""
-
-    __metaclass__ = _MetaSignature
-    signature = "s"
-
-
-class List(_Signature):
-    """List Type, an element type need to be specified"""
-
-    def __init__(self, elementType):
-        self.signature = "[%s]" % elementType.signature
-
-
-class Optional(_Signature):
+def Optional(value):
     """Optional Type, a value type need to be specified"""
-
-    def __init__(self, valueType):
-        self.signature = "+%s" % valueType.signature
+    return Signature(f"+{value}")
 
 
-class Map(_Signature):
+def Map(key, value):
     """List Type, a key and an element type need to be specified"""
-
-    def __init__(self, keyType, elementType):
-        self.signature = "{%s%s}" % (keyType.signature, elementType.signature)
+    return Signature(f"{{{key}{value}}}")
 
 
-class Struct(_Signature):
+def Struct(fields):
     """Structure Type"""
-
-    def __init__(self, fields):
-        self.signature = "(%s)" % fields.join("")
+    return Signature("(%s)" % fields.join(""))
 
 
-class Object(_Signature):
-    """Object Type"""
+Object = Signature("o")
+"""Object Type"""
 
-    __metaclass__ = _MetaSignature
-    signature = "o"
+Dynamic = Signature("m")
+"""Any Type"""
 
-
-class Dynamic(_Signature):
-    """Any Type"""
-
-    __metaclass__ = _MetaSignature
-    signature = "m"
-
-
-class Buffer(_Signature):
-    """Buffer Type"""
-
-    __metaclass__ = _MetaSignature
-    signature = "r"
+Buffer = Signature("r")
+"""Buffer Type"""
 
 
 # Yes this look similar to Dynamic but it's not.
@@ -172,13 +98,11 @@ class Buffer(_Signature):
 # eg: qi_py.bind(Void, AnyArguments)        this is not a tuple. (m not in tuple,
 #                                           mean anythings)
 # eg: qi_py.bind(Void, Dynamic)             this is a function with one argument
-class AnyArguments(_Signature):
-    """Any Arguments Types. A function or a signal taking AnyArguments
-    will accept all kind of arguments. AnyArguments is a list of AnyValue
-    """
-
-    __metaclass__ = _MetaSignature
-    signature = "m"
+AnyArguments = Signature("m")
+"""
+Any Arguments Types. A function or a signal taking AnyArguments
+will accept all kind of arguments. AnyArguments is a list of AnyValue
+"""
 
 
 # Return the qi_py.type of the parameter
