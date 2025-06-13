@@ -26,6 +26,7 @@ from ._type import (
     _isinstance,
 )
 from ._binder import bind, nobind, singleThreaded, multiThreaded
+from .translator import defaultTranslator, tr, Translator
 
 __all__ = [
     "Logger",
@@ -62,6 +63,9 @@ __all__ = [
     "nobind",
     "singleThreaded",
     "multiThreaded",
+    "defaultTranslator",
+    "tr",
+    "Translator",
 ]
 
 isinstance = _isinstance
