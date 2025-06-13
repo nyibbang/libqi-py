@@ -104,7 +104,11 @@ Buffer = Signature("r")
 # eg: qi_py.bind(Void, AnyArguments)        this is not a tuple. (m not in tuple,
 #                                           mean anythings)
 # eg: qi_py.bind(Void, Dynamic)             this is a function with one argument
-AnyArguments = Signature("m")
+class AnyArguments(Signature):
+    def __init__(self):
+        super().__init__("m")
+
+
 """
 Any Arguments Types. A function or a signal taking AnyArguments
 will accept all kind of arguments. AnyArguments is a list of AnyValue

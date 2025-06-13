@@ -25,6 +25,7 @@ from ._type import (
     typeof,
     _isinstance,
 )
+from ._binder import bind, nobind, singleThreaded, multiThreaded
 
 __all__ = [
     "Logger",
@@ -57,6 +58,10 @@ __all__ = [
     "AnyArguments",
     "typeof",
     "isinstance",
+    "bind",
+    "nobind",
+    "singleThreaded",
+    "multiThreaded",
 ]
 
 isinstance = _isinstance
