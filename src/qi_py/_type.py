@@ -79,6 +79,11 @@ def Map(key, value):
     return Signature(f"{{{key}{value}}}")
 
 
+def Tuple(elements):
+    """Tuple Type"""
+    return Signature("(%s)" % elements.join(""))
+
+
 def Struct(fields):
     """Structure Type"""
     return Signature("(%s)" % fields.join(""))
