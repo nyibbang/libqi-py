@@ -57,7 +57,8 @@ class bind:
         elif isinstance(paramsType, (list, tuple)):
             self.parameters_signature = str(Tuple(paramsType))
         elif isinstance(paramsType, AnyArguments) or (
-            inspect.isclass(paramsType) and issubclass(paramsType, AnyArguments)
+            inspect.isclass(paramsType) and issubclass(
+                paramsType, AnyArguments)
         ):
             self.parameters_signature = str(Dynamic)
         else:
@@ -73,7 +74,8 @@ class bind:
         if parameters_signature is None:
             parameters_signature = method_default_parameters_signature(fn)
 
-        fn._qi_binding = Binding(name, parameters_signature, self.return_signature)
+        fn._qi_binding = Binding(
+            name, parameters_signature, self.return_signature)
         return fn
 
 

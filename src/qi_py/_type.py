@@ -123,7 +123,8 @@ def typeof(a):
     """
     if isinstance(a, _Object):
         return Object
-    raise NotImplementedError("typeOf is only implemented for Object right now")
+    raise NotImplementedError(
+        "typeOf is only implemented for Object right now")
 
 
 # Cant be called isinstance or typeof will run into infinite loop
@@ -134,7 +135,8 @@ def _isinstance(a, type):
        this function is only implemented for Object
     """
     if type != Object:
-        raise NotImplementedError("isinstance is only implemented for Objectright now")
+        raise NotImplementedError(
+            "isinstance is only implemented for Objectright now")
     try:
         return typeof(a) == type
     except NotImplementedError:

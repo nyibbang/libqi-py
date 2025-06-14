@@ -286,7 +286,8 @@ def setLevel(level: LogLevel):
 
     :param level: The minimum log level.
     """
-    logging.getLogger(LOGGER_NAME).setLevel(level.to_python_logging_value(True))
+    logging.getLogger(LOGGER_NAME).setLevel(
+        level.to_python_logging_value(True))
 
 
 def setContext(context: int):
