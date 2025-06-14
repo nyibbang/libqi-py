@@ -27,6 +27,7 @@ from ._type import (
 )
 from ._binder import bind, nobind, singleThreaded, multiThreaded
 from .translator import defaultTranslator, tr, Translator
+from . import path
 
 __all__ = [
     "Logger",
@@ -66,6 +67,7 @@ __all__ = [
     "defaultTranslator",
     "tr",
     "Translator",
+    "path",
 ]
 
 isinstance = _isinstance
