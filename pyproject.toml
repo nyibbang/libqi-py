@@ -7,9 +7,7 @@ authors = [
     { name = "Vincent Palancher", email = "vincent.palancher@gmail.com" },
 ]
 requires-python = ">=3.10"
-dependencies = [
-    "termcolor>=3.1.0",
-]
+dependencies = ["termcolor>=3.1.0"]
 
 [build-system]
 requires = ["hatchling"]
@@ -17,3 +15,6 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = ["pytest>=8.3.5"]
+
+[tool.ruff]
+line-length = 100
