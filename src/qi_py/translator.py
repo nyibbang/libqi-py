@@ -1,6 +1,6 @@
-from .logging import warning
-
 __all__ = ["defaultTranslator", "tr"]
+
+from .logging import warning
 
 TRANSLATOR = None
 

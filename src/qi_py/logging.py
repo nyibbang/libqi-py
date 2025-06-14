@@ -1,10 +1,3 @@
-import logging
-import os
-import sys
-from enum import Enum
-from typing import Any
-from termcolor import colored
-
 __all__ = [
     "SILENT",
     "FATAL",
@@ -23,6 +16,13 @@ __all__ = [
     "setContext",
     "setFilters",
 ]
+
+import logging
+import os
+import sys
+from enum import Enum
+from typing import Any
+from termcolor import colored
 
 
 class LogLevel(Enum):

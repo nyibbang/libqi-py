@@ -1,5 +1,3 @@
-from pathlib import Path
-
 __all__ = [
     "findBin",
     "findLib",
@@ -18,6 +16,8 @@ __all__ = [
     "addOptionalSdkPrefix",
     "clearOptionalSdkPrefix",
 ]
+
+from pathlib import Path
 
 
 def sdkPrefix() -> Path:
