@@ -69,5 +69,8 @@ from ._type import (
 from ._binder import bind, nobind, singleThreaded, multiThreaded
 from .translator import defaultTranslator, tr, Translator
 from . import path
+import importlib.metadata
+
+__version__ = importlib.metadata.version(__name__)
 
 isinstance = _isinstance
