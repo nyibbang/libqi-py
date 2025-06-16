@@ -1,5 +1,5 @@
 import inspect
-from ._type import AnyArguments, Dynamic, Tuple
+from .type import AnyArguments, Dynamic, Tuple
 from enum import Enum
 from dataclasses import dataclass
 
@@ -50,15 +50,16 @@ def method_default_parameters_signature(fn) -> str:
 class bind:
     """Allows specifying types and methodName for bound methods."""
 
-    def __init__(self, returnType=None, paramsType=None, methodName=None) -> None:
+    def __init__(
+        self, returnType=None, paramsType=None, methodName=None
+    ) -> None:
         self.return_signature = str(returnType or Dynamic)
         if paramsType is None:
             self.parameters_signature = None
         elif isinstance(paramsType, (list, tuple)):
             self.parameters_signature = str(Tuple(paramsType))
         elif isinstance(paramsType, AnyArguments) or (
-            inspect.isclass(paramsType) and issubclass(
-                paramsType, AnyArguments)
+            inspect.isclass(paramsType) and issubclass(paramsType, AnyArguments)
         ):
             self.parameters_signature = str(Dynamic)
         else:
@@ -75,7 +76,8 @@ class bind:
             parameters_signature = method_default_parameters_signature(fn)
 
         fn._qi_binding = Binding(
-            name, parameters_signature, self.return_signature)
+            name, parameters_signature, self.return_signature
+        )
         return fn
 
 

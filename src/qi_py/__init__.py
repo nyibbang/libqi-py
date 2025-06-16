@@ -40,7 +40,7 @@ __all__ = [
 ]
 
 from .logging import Logger, error, fatal, info, verbose, warning
-from ._type import (
+from ._internal.type import (
     Void,
     Bool,
     Int8,
@@ -66,7 +66,7 @@ from ._type import (
     typeof,
     _isinstance,
 )
-from ._binder import bind, nobind, singleThreaded, multiThreaded
+from ._internal.binder import bind, nobind, singleThreaded, multiThreaded
 from .translator import defaultTranslator, tr, Translator
 from . import path
 import importlib.metadata

@@ -1,5 +1,5 @@
 from typing import Any
-from ._object import Object as _Object
+from .object import Object as _Object
 
 
 class Signature:
@@ -123,8 +123,7 @@ def typeof(a):
     """
     if isinstance(a, _Object):
         return Object
-    raise NotImplementedError(
-        "typeOf is only implemented for Object right now")
+    raise NotImplementedError("typeOf is only implemented for Object right now")
 
 
 # Cant be called isinstance or typeof will run into infinite loop
@@ -136,7 +135,8 @@ def _isinstance(a, type):
     """
     if type != Object:
         raise NotImplementedError(
-            "isinstance is only implemented for Objectright now")
+            "isinstance is only implemented for Objectright now"
+        )
     try:
         return typeof(a) == type
     except NotImplementedError:
