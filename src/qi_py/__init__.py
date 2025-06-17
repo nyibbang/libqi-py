@@ -37,6 +37,11 @@ __all__ = [
     "tr",
     "Translator",
     "path",
+    "FutureState",
+    "FutureTimeout",
+    "Future",
+    "futureBarrier",
+    "Promise",
 ]
 
 from .logging import Logger, error, fatal, info, verbose, warning
@@ -67,6 +72,13 @@ from ._internal.type import (
     _isinstance,
 )
 from ._internal.binder import bind, nobind, singleThreaded, multiThreaded
+from ._internal.future import (
+    FutureState,
+    FutureTimeout,
+    Future,
+    futureBarrier,
+    Promise,
+)
 from .translator import defaultTranslator, tr, Translator
 from . import path
 import importlib.metadata
