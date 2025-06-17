@@ -295,6 +295,7 @@ class Future:
         :returns: a future that will contain the return value of the callback.
         """
         future = self.get_loop().create_future()
+
         def then_invoke_callback(_) -> None:
             try:
                 result = callback(self)
@@ -317,8 +318,10 @@ class Future:
         :param callback: a callable, could be a method or a function.
         :returns: a future that will contain the return value of the callback.
         """
+
         async def and_then_invoke_callback():
             return callback(await self)
+
         return Future(self.get_loop().create_task(and_then_invoke_callback()))
 
     def unwrap(self) -> "Future":
@@ -327,6 +330,7 @@ class Future:
 
         The state of both futures is forwarded and cancel requests are forwarded to the appropriate future.
         """
+
         async def invoke_unwrap():
             result = await self
             if not inspect.isawaitable(result):
@@ -334,6 +338,7 @@ class Future:
                 warning("qi_py.future", error)
                 raise RuntimeError(error)
             return await result
+
         return Future(self.get_loop().create_task(invoke_unwrap()))
 
     def __await__(self):
@@ -347,8 +352,10 @@ def futureBarrier(futureList):
     :param futureList: A list of Futures to wait for.
     :returns: A Future of list of futureList.
     """
+
     async def wait_all():
         (done, pending) = await asyncio.wait(futureList)
-        assert(len(pending) == 0)
+        assert len(pending) == 0
         return done
+
     return Future(event_loop().create_task(wait_all()))
