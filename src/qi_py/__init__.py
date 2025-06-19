@@ -42,6 +42,8 @@ __all__ = [
     "Future",
     "futureBarrier",
     "Promise",
+    "runAsync",
+    "PeriodicTask",
 ]
 
 from .logging import Logger, error, fatal, info, verbose, warning
@@ -78,6 +80,8 @@ from ._internal.future import (
     Future,
     futureBarrier,
     Promise,
+    runAsync,
+    PeriodicTask,
 )
 from .translator import defaultTranslator, tr, Translator
 from . import path

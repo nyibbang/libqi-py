@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from enum import IntEnum
+from functools import partial
 import inspect
 from typing import Callable, Any
+import weakref
 from ..logging import warning, error
 from .application import event_loop
 import asyncio
@@ -345,11 +347,15 @@ class Future:
         return self._internal.future.__await__()
 
 
-def futureBarrier(futureList):
+def futureBarrier(
+    futureList, loop: asyncio.AbstractEventLoop | None = None
+) -> Future:
     """
-    Return a future that will be set with all the futures given as argument when they are all finished. This is useful to wait for a bunch of Futures at once.
+    Return a future that will be set with all the futures given as argument when they are all finished.
+    This is useful to wait for a bunch of Futures at once.
 
     :param futureList: A list of Futures to wait for.
+    :param loop: An event loop to use for scheduling. If set to `None`, it will use the module global event loop.
     :returns: A Future of list of futureList.
     """
 
@@ -358,4 +364,158 @@ def futureBarrier(futureList):
         assert len(pending) == 0
         return done
 
-    return Future(event_loop().create_task(wait_all()))
+    loop = loop or event_loop()
+    return Future(loop.create_task(wait_all()))
+
+
+def runAsync(
+    callback: Callable,
+    *args,
+    delay: int | float = 0,
+    loop: asyncio.AbstractEventLoop | None = None,
+    **kwargs,
+) -> Future:
+    """
+    :param callback: the callback that will be called
+    :param delay: an optional delay in microseconds
+    :param loop: An event loop to use for scheduling. If set to `None`, it will use the module global event loop.
+    :returns: a future with the return value of the function
+    """
+    delay = float(delay) / 1e3  # get delay in seconds
+
+    async def sleep_then_invoke_callback():
+        await asyncio.sleep(delay)
+        return callback(*args, **kwargs)
+
+    loop = loop or event_loop()
+    return Future(loop.create_task(sleep_then_invoke_callback()))
+
+
+class PeriodicTask:
+    def __init__(self, loop: asyncio.AbstractEventLoop | None = None) -> None:
+        """
+        :param loop: An event loop to use for scheduling. If set to `None`, it will use the module global event loop.
+        """
+        self.callback: Callable | None = None
+        self.period: float | None = None  # in seconds
+        self.name = f"PeriodicTask_{id(self)}"
+        self.compensate = False
+        self.loop = loop or event_loop()
+        self.task: asyncio.Task | None = None
+
+    @staticmethod
+    async def invoke_callback(callback, period: float, immediate: bool):
+        if not immediate:
+            await asyncio.sleep(period)
+        while True:
+            if inspect.isawaitable(callback):
+                await callback
+            else:
+                # `callback` is possibly blocking, so we run it in some dedicated separate thread.
+                await asyncio.to_thread(callback)
+            await asyncio.sleep(period)
+
+    def setCallback(self, callable: Callable) -> None:
+        """
+        Set the callback used by the periodic task, this function can only be called once.
+
+        :param callable: a python callable, could be a method or a function.
+        :raises: a RuntimeError if a callbacck has already been set.
+        """
+        if self.callback is not None:
+            raise RuntimeError("Callback has already been set")
+        self.callback = callable
+
+    def setUsPeriod(self, usPeriod: int | float) -> None:
+        """
+        Set the call interval in microseconds.
+        This call will wait until next callback invocation to apply the change.
+        To apply the change immediately, use:
+
+        .. code-block:: python
+            task.stop()
+            task.setUsPeriod(
+                100
+            )
+            task.start()
+
+        :param usPeriod: the period in microseconds
+        :raises: a ValueError if the period is negative.
+        """
+        period = float(usPeriod) / 1e3
+        if period < 0:
+            raise ValueError("Period cannot be negative")
+        self.period = period
+
+    def start(self, immediate) -> None:
+        """
+        Start the periodic task at specified period. No effect if already running.
+
+        :param immediate: if true, first schedule of the task will happen with no delay.
+        """
+        if self.task is not None:
+            return
+        if self.callback is None:
+            raise RuntimeError(
+                "Periodic task cannot start without a setCallback() call first"
+            )
+        if self.period is None or self.period < 0:
+            raise RuntimeError(
+                "Periodic task cannot start without a setPeriod() call first"
+            )
+        self.task = self.loop.create_task(
+            PeriodicTask.invoke_callback(self.callback, self.period, immediate)
+        )
+
+        def reset_self_task(weak, _):
+            ref = weak()
+            if ref is None:
+                return
+            ref.task = None
+
+        self.task.add_done_callback(partial(reset_self_task, weakref.ref(self)))
+
+    def stop(self) -> None:
+        """
+        Stop the periodic task. When this function returns, the callback will not be called anymore.
+        Can be called from within the callback function.
+        """
+        if self.task is None:
+            return
+        self.task.cancel()
+
+    def asyncStop(self):
+        """
+        Request for periodic task to stop asynchronously.
+        Can be called from within the callback function.
+        """
+        self.running = False
+
+    def compensateCallbackTime(self, compensate: bool):
+        """
+        :param compensate: boolean. True to activate the compensation. When compensation is activated, call interval
+        will take into account call duration to maintain the period.
+
+        .. warning::
+            when the callback is longer than the specified period, compensation will result in the callback being
+            called successively without pause.
+        """
+        self.compensate = compensate
+
+    def setName(self, name: str) -> None:
+        """Set name for debugging and tracking purpose"""
+        self.name = name
+        if self.task is not None:
+            self.task.set_name(name)
+
+    def isRunning(self) -> bool:
+        """:returns: true if task is running"""
+        return self.task is not None and not self.task.cancelled()
+
+    def isStopping(self) -> bool:
+        """
+        Can be called from within the callback to know if stop() or asyncStop() was called.
+
+        returns: whether state is stopping or stopped.
+        """
+        return not self.isRunning()
