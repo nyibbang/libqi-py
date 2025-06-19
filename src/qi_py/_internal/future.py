@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from functools import partial
 import inspect
+import time
 from typing import Callable, Any
 import weakref
 from ..logging import warning, error
@@ -404,16 +405,24 @@ class PeriodicTask:
         self.task: asyncio.Task | None = None
 
     @staticmethod
-    async def invoke_callback(callback, period: float, immediate: bool):
+    async def invoke_callback(
+        callback, period: float, compensate: bool, immediate: bool
+    ):
         if not immediate:
             await asyncio.sleep(period)
         while True:
+            if compensate:
+                before_call = time.monotonic()
             if inspect.isawaitable(callback):
                 await callback
             else:
                 # `callback` is possibly blocking, so we run it in some dedicated separate thread.
                 await asyncio.to_thread(callback)
-            await asyncio.sleep(period)
+            delay = period
+            if compensate:
+                after_call = time.monotonic()
+                delay -= after_call - before_call  # type: ignore
+            await asyncio.sleep(delay)
 
     def setCallback(self, callable: Callable) -> None:
         """
@@ -464,7 +473,9 @@ class PeriodicTask:
                 "Periodic task cannot start without a setPeriod() call first"
             )
         self.task = self.loop.create_task(
-            PeriodicTask.invoke_callback(self.callback, self.period, immediate)
+            PeriodicTask.invoke_callback(
+                self.callback, self.period, self.compensate, immediate
+            )
         )
 
         def reset_self_task(weak, _):
