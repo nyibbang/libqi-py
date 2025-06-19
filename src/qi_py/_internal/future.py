@@ -25,7 +25,7 @@ class FutureTimeout(IntEnum):
 @dataclass
 class Internal:
     future: asyncio.Future
-    on_cancel: Callable[[]] | None
+    on_cancel: Callable[[], Any] | None
     cancel_requested: bool = False
 
 
@@ -275,7 +275,7 @@ class Future:
         """
         return True
 
-    def addCallback(self, callback: Callable[["Future"], None]) -> None:
+    def addCallback(self, callback: Callable[["Future"], Any]) -> None:
         """
         Add a callback that will be called when the future becomes ready.
 
