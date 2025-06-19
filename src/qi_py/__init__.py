@@ -44,6 +44,9 @@ __all__ = [
     "Promise",
     "runAsync",
     "PeriodicTask",
+    "clockNow",
+    "steadyClockNow",
+    "systemClockNow",
 ]
 
 from .logging import Logger, error, fatal, info, verbose, warning
@@ -83,6 +86,7 @@ from ._internal.future import (
     runAsync,
     PeriodicTask,
 )
+from ._internal.time import clockNow, steadyClockNow, systemClockNow
 from .translator import defaultTranslator, tr, Translator
 from . import path
 import importlib.metadata
