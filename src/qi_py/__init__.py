@@ -47,6 +47,8 @@ __all__ = [
     "clockNow",
     "steadyClockNow",
     "systemClockNow",
+    "module",
+    "listModules",
 ]
 
 from .logging import Logger, error, fatal, info, verbose, warning
@@ -88,6 +90,7 @@ from ._internal.future import (
     PeriodicTask,
 )
 from ._internal.time import clockNow, steadyClockNow, systemClockNow
+from ._internal.module import module, listModules
 from .translator import defaultTranslator, tr, Translator
 from . import path
 import importlib.metadata
