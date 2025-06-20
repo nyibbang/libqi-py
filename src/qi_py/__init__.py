@@ -83,6 +83,7 @@ from ._internal.future import (
     Future,
     futureBarrier,
     Promise,
+    PromiseNoop as PromiseNoop,
     runAsync,
     PeriodicTask,
 )

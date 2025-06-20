@@ -111,6 +111,12 @@ class Promise:
         return self._internal.cancel_requested
 
 
+def PromiseNoop(*args, **kwargs):
+    """No operation function
+    .. deprecated:: 1.5.0"""
+    pass
+
+
 class Future:
     def __init__(self, value):
         """Create a future with a value."""
