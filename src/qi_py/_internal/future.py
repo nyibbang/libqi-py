@@ -3,7 +3,7 @@ from enum import IntEnum
 from functools import partial
 import inspect
 import time
-from typing import Callable, Any
+from typing import Callable, Any, Generic, TypeVar
 import weakref
 from ..logging import warning, error
 from .application import event_loop
@@ -69,7 +69,11 @@ def invoke_on_cancel(on_cancel, promise) -> None:
         )
 
 
-class Promise:
+T = TypeVar("T")
+U = TypeVar("U")
+
+
+class Promise(Generic[T]):
     def __init__(self, on_cancel=None):
         """
         :param on_cancel: a function that will be called when a cancel is requested on the future.
@@ -80,7 +84,9 @@ class Promise:
             lambda: invoke_on_cancel(on_cancel, self),
         )
 
-    def setOnCancel(self, on_cancel=None) -> None:
+    def setOnCancel(
+        self, on_cancel: Callable[["Promise[T]"], Any] | None = None
+    ) -> None:
         self._internal.on_cancel = lambda: invoke_on_cancel(on_cancel, self)
 
     def setCanceled(self):
@@ -90,7 +96,7 @@ class Promise:
         if not self._internal.future.cancel():
             raise RuntimeError("Future has already been set.")
 
-    def setError(self, error) -> None:
+    def setError(self, error: Exception | str) -> None:
         """Set the error of the promise."""
         if isinstance(error, Exception):
             exception = error
@@ -98,11 +104,11 @@ class Promise:
             exception = Exception(error)
         self._internal.future.set_exception(exception)
 
-    def setValue(self, value) -> None:
+    def setValue(self, value: T) -> None:
         """Set the value of the promise."""
         self._internal.future.set_result(value)
 
-    def future(self):
+    def future(self) -> "Future[T]":
         """Get a future tied to the promise. You can get multiple futures from the same promise."""
         return Future(self._internal)
 
@@ -111,14 +117,14 @@ class Promise:
         return self._internal.cancel_requested
 
 
-def PromiseNoop(*args, **kwargs):
+def PromiseNoop(*_):
     """No operation function
     .. deprecated:: 1.5.0"""
     pass
 
 
-class Future:
-    def __init__(self, value):
+class Future(Generic[T]):
+    def __init__(self, value: T | Internal | asyncio.Future):
         """Create a future with a value."""
         if isinstance(value, Internal):
             self._internal = value
@@ -132,10 +138,10 @@ class Future:
             future.set_result(value)
         self._internal = Internal(future, lambda: future.cancel())
 
-    def get_loop(self):
+    def get_loop(self) -> asyncio.AbstractEventLoop:
         return self._internal.future.get_loop()
 
-    async def wait_for(self, timeout: int | float):
+    async def wait_for(self, timeout: int | float) -> None:
         """
         Run the future until completion or until some time has passed.
 
@@ -162,7 +168,7 @@ class Future:
         except Exception as err:
             return on_error(err)
 
-    def value(self, timeout: int | float = FutureTimeout.Infinite):
+    def value(self, timeout: int | float = FutureTimeout.Infinite) -> T:
         """
         Block until the future is ready.
 
@@ -282,7 +288,7 @@ class Future:
         """
         return True
 
-    def addCallback(self, callback: Callable[["Future"], Any]) -> None:
+    def addCallback(self, callback: Callable[["Future[T]"], Any]) -> None:
         """
         Add a callback that will be called when the future becomes ready.
 
@@ -293,7 +299,7 @@ class Future:
         """
         self._internal.future.add_done_callback(lambda _: callback(self))
 
-    def then(self, callback: Callable[["Future"], Any]) -> "Future":
+    def then(self, callback: Callable[["Future[T]"], U]) -> "Future[U]":
         """
         Add a callback that will be called when the future becomes ready.
 
@@ -315,7 +321,7 @@ class Future:
         self._internal.future.add_done_callback(then_invoke_callback)
         return Future(future)
 
-    def andThen(self, callback: Callable) -> "Future":
+    def andThen(self, callback: Callable[[T], U]) -> "Future[U]":
         """
         Add a callback that will be called when the future becomes ready if it has a value.
 
@@ -356,7 +362,7 @@ class Future:
 
 def futureBarrier(
     futureList, loop: asyncio.AbstractEventLoop | None = None
-) -> Future:
+) -> Future[list[Future]]:
     """
     Return a future that will be set with all the futures given as argument when they are all finished.
     This is useful to wait for a bunch of Futures at once.
@@ -369,19 +375,18 @@ def futureBarrier(
     async def wait_all():
         (done, pending) = await asyncio.wait(futureList)
         assert len(pending) == 0
-        return done
+        return list(done)
 
     loop = loop or event_loop()
     return Future(loop.create_task(wait_all()))
 
 
 def runAsync(
-    callback: Callable,
+    callback: Callable[..., T],
     *args,
     delay: int | float = 0,
     loop: asyncio.AbstractEventLoop | None = None,
-    **kwargs,
-) -> Future:
+) -> Future[T]:
     """
     :param callback: the callback that will be called
     :param delay: an optional delay in microseconds
@@ -392,7 +397,7 @@ def runAsync(
 
     async def sleep_then_invoke_callback():
         await asyncio.sleep(delay)
-        return callback(*args, **kwargs)
+        return callback(*args)
 
     loop = loop or event_loop()
     return Future(loop.create_task(sleep_then_invoke_callback()))
@@ -403,12 +408,12 @@ class PeriodicTask:
         """
         :param loop: An event loop to use for scheduling. If set to `None`, it will use the module global event loop.
         """
-        self.callback: Callable | None = None
-        self.period: float | None = None  # in seconds
-        self.name = f"PeriodicTask_{id(self)}"
-        self.compensate = False
-        self.loop = loop or event_loop()
-        self.task: asyncio.Task | None = None
+        self._callback: Callable | None = None
+        self._period: float | None = None  # in seconds
+        self._name = f"PeriodicTask_{id(self)}"
+        self._compensate = False
+        self._loop = loop or event_loop()
+        self._task: asyncio.Task | None = None
 
     @staticmethod
     async def invoke_callback(
@@ -437,9 +442,9 @@ class PeriodicTask:
         :param callable: a python callable, could be a method or a function.
         :raises: a RuntimeError if a callbacck has already been set.
         """
-        if self.callback is not None:
+        if self._callback is not None:
             raise RuntimeError("Callback has already been set")
-        self.callback = callable
+        self._callback = callable
 
     def setUsPeriod(self, usPeriod: int | float) -> None:
         """
@@ -460,7 +465,7 @@ class PeriodicTask:
         period = float(usPeriod) / 1e3
         if period < 0:
             raise ValueError("Period cannot be negative")
-        self.period = period
+        self._period = period
 
     def start(self, immediate) -> None:
         """
@@ -468,19 +473,19 @@ class PeriodicTask:
 
         :param immediate: if true, first schedule of the task will happen with no delay.
         """
-        if self.task is not None:
+        if self._task is not None:
             return
-        if self.callback is None:
+        if self._callback is None:
             raise RuntimeError(
                 "Periodic task cannot start without a setCallback() call first"
             )
-        if self.period is None or self.period < 0:
+        if self._period is None or self._period < 0:
             raise RuntimeError(
                 "Periodic task cannot start without a setPeriod() call first"
             )
-        self.task = self.loop.create_task(
+        self._task = self._loop.create_task(
             PeriodicTask.invoke_callback(
-                self.callback, self.period, self.compensate, immediate
+                self._callback, self._period, self._compensate, immediate
             )
         )
 
@@ -490,23 +495,25 @@ class PeriodicTask:
                 return
             ref.task = None
 
-        self.task.add_done_callback(partial(reset_self_task, weakref.ref(self)))
+        self._task.add_done_callback(
+            partial(reset_self_task, weakref.ref(self))
+        )
 
     def stop(self) -> None:
         """
         Stop the periodic task. When this function returns, the callback will not be called anymore.
         Can be called from within the callback function.
         """
-        if self.task is None:
+        if self._task is None:
             return
-        self.task.cancel()
+        self._task.cancel()
 
     def asyncStop(self):
         """
         Request for periodic task to stop asynchronously.
         Can be called from within the callback function.
         """
-        self.running = False
+        self.stop()
 
     def compensateCallbackTime(self, compensate: bool):
         """
@@ -517,17 +524,17 @@ class PeriodicTask:
             when the callback is longer than the specified period, compensation will result in the callback being
             called successively without pause.
         """
-        self.compensate = compensate
+        self._compensate = compensate
 
     def setName(self, name: str) -> None:
         """Set name for debugging and tracking purpose"""
-        self.name = name
-        if self.task is not None:
-            self.task.set_name(name)
+        self._name = name
+        if self._task is not None:
+            self._task.set_name(name)
 
     def isRunning(self) -> bool:
         """:returns: true if task is running"""
-        return self.task is not None and not self.task.cancelled()
+        return self._task is not None and not self._task.cancelled()
 
     def isStopping(self) -> bool:
         """
