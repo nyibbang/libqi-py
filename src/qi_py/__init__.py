@@ -51,6 +51,7 @@ __all__ = [
     "listModules",
     "Application",
     "Signal",
+    "Property",
 ]
 
 from .logging import Logger, error, fatal, info, verbose, warning
@@ -95,6 +96,7 @@ from ._internal.time import clockNow, steadyClockNow, systemClockNow
 from ._internal.module import module, listModules
 from ._internal.application import Application
 from ._internal.signal import Signal
+from ._internal.property import Property
 from .translator import defaultTranslator, tr, Translator
 from . import path
 import importlib.metadata

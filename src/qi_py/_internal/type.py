@@ -3,7 +3,7 @@ from .object import Object as _Object
 
 
 class Signature:
-    def __init__(self, signature):
+    def __init__(self, signature: str):
         self.signature = signature
 
     def __str__(self):
@@ -141,3 +141,47 @@ def _isinstance(a, type):
         return typeof(a) == type
     except NotImplementedError:
         return False
+
+
+def make_default_value(signature: str | Signature):
+    """Create a default value for the given signature."""
+    signature = (
+        signature if isinstance(signature, Signature) else Signature(signature)
+    )
+    if signature == Void:
+        return None
+    elif signature == Bool:
+        return False
+    elif signature in (
+        Int8,
+        UInt8,
+        Int16,
+        UInt16,
+        Int32,
+        UInt32,
+        Int64,
+        UInt64,
+    ):
+        return 0
+    elif signature in (Float, Double):
+        return 0.0
+    elif signature == String:
+        return ""
+    elif signature == Buffer:
+        return bytearray()
+    elif signature == Dynamic:
+        return None
+    elif isinstance(signature, Signature) and signature.signature.startswith(
+        "["
+    ):
+        return []
+    elif isinstance(signature, Signature) and signature.signature.startswith(
+        "{"
+    ):
+        return {}
+    elif isinstance(signature, Signature) and signature.signature.startswith(
+        "("
+    ):
+        return tuple()
+    else:
+        raise ValueError(f"Unsupported signature: {signature}")

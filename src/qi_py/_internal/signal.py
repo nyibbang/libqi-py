@@ -1,11 +1,13 @@
-from typing import Any, Callable
+from typing import Callable, Generic, TypeVar
 
 from ..logging import warning
 from .future import Future
 from .type import Signature, Dynamic
 
+T = TypeVar("T")
 
-class Signal:
+
+class Signal(Generic[T]):
     def __init__(
         self,
         signature: str | Signature = Dynamic,
@@ -16,7 +18,9 @@ class Signal:
         self._subscribers = {}
         self._next_id = 1
 
-    def connect(self, callback, _async=False) -> int | Future[int]:
+    def connect(
+        self, callback: Callable[[T], None], _async=False
+    ) -> int | Future[int]:
         """
         Connect the signal to a callback, the callback will be called each time the signal is
         triggered. Use the id returned to unregister the callback.
@@ -60,7 +64,7 @@ class Signal:
             self._on_connect(False)
         return Future(True) if _async else True
 
-    def __call__(self, *args) -> None:
+    def __call__(self, *args: T) -> None:
         """Trigger the signal"""
         for callback in self._subscribers.values():
             try:
