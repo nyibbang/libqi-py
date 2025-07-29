@@ -31,7 +31,7 @@ class Object:
     def isValid(self) -> bool:
         return self.uid is not None
 
-    def call(self, funcName, *args, **kwargs):
+    def call(self, funcName, *args, _overload=False, _async=False):
         raise NotImplementedError()
 
     def metaObject(self) -> MetaObject:
