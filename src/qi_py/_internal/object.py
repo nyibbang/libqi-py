@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from functools import total_ordering
 
 
@@ -36,3 +36,8 @@ class Object:
 
     def metaObject(self) -> MetaObject:
         return self.meta_object
+
+    if TYPE_CHECKING:
+
+        def __getattr__(self, attribute: str) -> Any: ...
+        def __setattr__(self, attribute: str, value: object) -> None: ...
