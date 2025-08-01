@@ -1,4 +1,4 @@
-# import time
+import time
 import qi_py as qi
 import pytest
 
@@ -8,163 +8,163 @@ class TestService:
         return t
 
 
-# def test_throwing_callback():
-#     def raising(f):
-#         raise Exception("woops")
+def test_throwing_callback():
+    def raising(f):
+        raise Exception("woops")
 
-#     local = "tcp://127.0.0.1:0"
-#     sd = qi.Session()
-#     sd.listenStandalone(local)
+    local = "tcp://127.0.0.1:0"
+    sd = qi.Session()
+    sd.listenStandalone(local)
 
-#     s = qi.Session()
-#     s.connect(sd.endpoints()[0])
-#     f = s.service("ServiceDirectory", _async=True)
+    s = qi.Session()
+    s.connect(sd.endpoints()[0])
+    f = s.service("ServiceDirectory", _async=True)
 
-#     f.addCallback(raising)
-#     time.sleep(0.01)
-#     s.close()
-
-
-# def test_unicode_strings():
-#     local = "tcp://127.0.0.1:0"
-#     sd = qi.Session()
-#     sd.listenStandalone(local)
-
-#     s = qi.Session()
-#     s.connect(sd.endpoints()[0])
-
-#     m = TestService()
-#     s.registerService("TestService", m)
-#     service = s.service("TestService")
-#     # ASCII range
-#     unicode_string = "".join([chr(i) for i in range(1, 128)])
-#     mystring = service.display(unicode_string)
-#     print("mystr:", mystring)
-#     print("uystr:", unicode_string)
-#     assert type(mystring) == str
-#     assert mystring.encode("ascii") == unicode_string.encode("ascii")
-
-#     # Wide unicode
-#     wide_string = "\\U00010000" * 39 + "\\uffff" * 4096
-#     mystring = service.display(wide_string)
-#     assert mystring == wide_string
-
-#     # String with many unicode chars
-#     unicode_string = "".join([chr(i) for i in range(1, 50000)])
-#     service.display(unicode_string)
-#     time.sleep(0.01)
-#     s.close()
+    f.addCallback(raising)
+    time.sleep(0.01)
+    s.close()
 
 
-# def test_builtin_types():
-#     local = "tcp://127.0.0.1:0"
-#     sd = qi.Session()
-#     sd.listenStandalone(local)
+def test_unicode_strings():
+    local = "tcp://127.0.0.1:0"
+    sd = qi.Session()
+    sd.listenStandalone(local)
 
-#     s = qi.Session()
-#     s.connect(sd.endpoints()[0])
+    s = qi.Session()
+    s.connect(sd.endpoints()[0])
 
-#     m = TestService()
-#     s.registerService("TestService", m)
-#     service = s.service("TestService")
+    m = TestService()
+    s.registerService("TestService", m)
+    service = s.service("TestService")
+    # ASCII range
+    unicode_string = "".join([chr(i) for i in range(1, 128)])
+    mystring = service.display(unicode_string)
+    print("mystr:", mystring)
+    print("uystr:", unicode_string)
+    assert type(mystring) == str
+    assert mystring.encode("ascii") == unicode_string.encode("ascii")
 
-#     # None
-#     assert service.display(None) is None
-#     # bool
-#     t, f = service.display(True), service.display(False)
-#     assert t == 1  # is True ?
-#     assert f == 0  # is False ?
+    # Wide unicode
+    wide_string = "\\U00010000" * 39 + "\\uffff" * 4096
+    mystring = service.display(wide_string)
+    assert mystring == wide_string
 
-#     # int
-#     integer_types = (int,)
-#     assert isinstance(service.display(42), integer_types)
-#     assert service.display(42) == 42
-
-#     # float
-#     assert service.display(0.1337) == 0.1337
-
-#     # long (32b)
-#     assert service.display(2**31 - 1) == 2147483647
-
-#     # list
-#     assert service.display([]) == []
-#     assert service.display([1]) == [1]
-#     assert service.display(["bla", "bli"]) == ["bla", "bli"]
-
-#     # sets
-#     assert service.display(set([1, 2])) == (1, 2)
-#     assert service.display(frozenset([1, 2])) == (1, 2)
-#     ret = service.display(frozenset([frozenset("a"), frozenset("b")]))
-#     assert ret == (("b",), ("a",)) or ret == (("a",), ("b",))
-
-#     # tuple
-#     assert service.display(()) == ()
-#     assert service.display((1)) == (1)
-#     assert service.display((1, 2)) == (1, 2)
-
-#     # dict
-#     assert service.display({}) == {}
-#     assert service.display({1: "bla", 3: []}) == {1: "bla", 3: []}
-
-#     # bytearray
-#     assert service.display(bytearray("lol", encoding="ascii")) == "lol"
-
-#     # buffer (not implemented)
-#     with pytest.raises(RuntimeError):
-#         service.display(memoryview("lol".encode()))
-
-#     time.sleep(0.01)
-#     s.close()
+    # String with many unicode chars
+    unicode_string = "".join([chr(i) for i in range(1, 50000)])
+    service.display(unicode_string)
+    time.sleep(0.01)
+    s.close()
 
 
-# def test_object_types():
-#     local = "tcp://127.0.0.1:0"
-#     sd = qi.Session()
-#     sd.listenStandalone(local)
+def test_builtin_types():
+    local = "tcp://127.0.0.1:0"
+    sd = qi.Session()
+    sd.listenStandalone(local)
 
-#     s = qi.Session()
-#     s.connect(sd.endpoints()[0])
+    s = qi.Session()
+    s.connect(sd.endpoints()[0])
 
-#     m = TestService()
-#     s.registerService("TestService", m)
-#     service = s.service("TestService")
+    m = TestService()
+    s.registerService("TestService", m)
+    service = s.service("TestService")
 
-#     # new style
-#     class A(object):
-#         pass
+    # None
+    assert service.display(None) is None
+    # bool
+    t, f = service.display(True), service.display(False)
+    assert t == 1  # is True ?
+    assert f == 0  # is False ?
 
-#     obj = A()
+    # int
+    integer_types = (int,)
+    assert isinstance(service.display(42), integer_types)
+    assert service.display(42) == 42
 
-#     service.display(A)
-#     service.display(obj)
+    # float
+    assert service.display(0.1337) == 0.1337
 
-#     # old style
-#     class Aold:
-#         pass
+    # long (32b)
+    assert service.display(2**31 - 1) == 2147483647
 
-#     objold = Aold()
+    # list
+    assert service.display([]) == []
+    assert service.display([1]) == [1]
+    assert service.display(["bla", "bli"]) == ["bla", "bli"]
 
-#     try:
-#         service.display(Aold)
-#     except RuntimeError:
-#         pass
+    # sets
+    assert service.display(set([1, 2])) == (1, 2)
+    assert service.display(frozenset([1, 2])) == (1, 2)
+    ret = service.display(frozenset([frozenset("a"), frozenset("b")]))
+    assert ret == (("b",), ("a",)) or ret == (("a",), ("b",))
 
-#     service.display(objold)
+    # tuple
+    assert service.display(()) == ()
+    assert service.display((1)) == (1)
+    assert service.display((1, 2)) == (1, 2)
+
+    # dict
+    assert service.display({}) == {}
+    assert service.display({1: "bla", 3: []}) == {1: "bla", 3: []}
+
+    # bytearray
+    assert service.display(bytearray("lol", encoding="ascii")) == "lol"
+
+    # buffer (not implemented)
+    with pytest.raises(RuntimeError):
+        service.display(memoryview("lol".encode()))
+
+    time.sleep(0.01)
+    s.close()
 
 
-# def test_qi_object_instance():
-#     local = "tcp://127.0.0.1:0"
-#     sd = qi.Session()
-#     sd.listenStandalone(local)
+def test_object_types():
+    local = "tcp://127.0.0.1:0"
+    sd = qi.Session()
+    sd.listenStandalone(local)
 
-#     s = qi.Session()
-#     s.connect(sd.endpoints()[0])
+    s = qi.Session()
+    s.connect(sd.endpoints()[0])
 
-#     m = s.service("ServiceDirectory")
-#     assert qi.typeof(m) == qi.Object
-#     assert qi.typeof(m) == qi.Object()
-#     assert qi.isinstance(m, qi.Object)
-#     assert qi.isinstance(m, qi.Object())
+    m = TestService()
+    s.registerService("TestService", m)
+    service = s.service("TestService")
+
+    # new style
+    class A(object):
+        pass
+
+    obj = A()
+
+    service.display(A)
+    service.display(obj)
+
+    # old style
+    class Aold:
+        pass
+
+    objold = Aold()
+
+    try:
+        service.display(Aold)
+    except RuntimeError:
+        pass
+
+    service.display(objold)
+
+
+def test_qi_object_instance():
+    local = "tcp://127.0.0.1:0"
+    sd = qi.Session()
+    sd.listenStandalone(local)
+
+    s = qi.Session()
+    s.connect(sd.endpoints()[0])
+
+    m = s.service("ServiceDirectory")
+    assert qi.typeof(m) == qi.Object
+    assert qi.typeof(m) == qi.Object()
+    assert qi.isinstance(m, qi.Object)
+    assert qi.isinstance(m, qi.Object())
 
 
 def test_type():

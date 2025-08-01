@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, overload
+from typing_extensions import Literal
 from .object import Object
 from .future import Future
 from .signal import Signal
@@ -30,11 +31,30 @@ class Session:
         self.disconnected = Signal[str]()
         self.sd_connection = None
 
+    @overload
+    def connect(
+        self,
+        url: str = ...,
+        *,
+        _async: Literal[False] = ...,
+        _overload: str | None = ...,
+    ) -> None: ...
+
+    @overload
+    def connect(
+        self,
+        url: str = ...,
+        *,
+        _async: Literal[True],
+        _overload: str | None = ...,
+    ) -> Future[None]: ...
+
     def connect(
         self,
         url: str = default_connect_url,
-        _overload: str | None = None,
+        *,
         _async: bool = False,
+        _overload: str | None = None,
     ) -> None | Future[None]:
         future = Future(self.async_connect(url))
         return future if _async else future.value()
@@ -61,31 +81,31 @@ class Session:
         raise NotImplementedError()
 
     def close(
-        self, _overload: str | None = None, _async: bool = False
+        self, *, _async: bool = False, _overload: str | None = None
     ) -> None | Future[None]:
         # TODO
         raise NotImplementedError()
 
     def isConnected(
-        self, _overload: str | None = None, _async: bool = False
+        self, *, _async: bool = False, _overload: str | None = None
     ) -> bool | Future[bool]:
         # TODO
         raise NotImplementedError()
 
     def endpoints(
-        self, _overload: str | None = None, _async: bool = False
+        self, *, _async: bool = False, _overload: str | None = None
     ) -> list[str] | Future[list[str]]:
         # TODO
         raise NotImplementedError()
 
     def url(
-        self, _overload: str | None = None, _async: bool = False
+        self, *, _async: bool = False, _overload: str | None = None
     ) -> str | Future[str]:
         # TODO
         raise NotImplementedError()
 
     def services(
-        self, _overload: str | None = None, _async: bool = False
+        self, *, _async: bool = False, _overload: str | None = None
     ) -> list[ServiceInfo] | Future[list[ServiceInfo]]:
         # TODO
         raise NotImplementedError()
@@ -94,8 +114,9 @@ class Session:
         self,
         name: str,
         timeout: int | float = default_wait_for_service_timeout,
-        _overload: str | None = None,
+        *,
         _async: bool = False,
+        _overload: str | None = None,
     ) -> None | Future[None]:
         # TODO
         raise NotImplementedError()
@@ -104,8 +125,9 @@ class Session:
         self,
         name: str,
         timeout: int | float = default_service_timeout,
-        _overload: str | None = None,
+        *,
         _async: bool = False,
+        _overload: str | None = None,
     ) -> Object | Future[Object]:
         # TODO
         raise NotImplementedError()
@@ -114,14 +136,15 @@ class Session:
         self,
         name: str,
         service: str,
-        _overload: str | None = None,
+        *,
         _async: bool = False,
+        _overload: str | None = None,
     ) -> int | Future[int]:
         # TODO
         raise NotImplementedError()
 
     def unregisterService(
-        self, id: int, _overload: str | None = None, _async: bool = False
+        self, id: int, *, _async: bool = False, _overload: str | None = None
     ) -> None | Future[None]:
         # TODO
         raise NotImplementedError()
@@ -131,8 +154,8 @@ class Session:
         module: str,
         rename: str,
         *args,
-        _overload: str | None = None,
         _async: bool = False,
+        _overload: str | None = None,
     ):
         raise NotImplementedError("modules are not supported in qi_py")
 
@@ -140,7 +163,7 @@ class Session:
         self,
         module: str,
         *args,
-        _overload: str | None = None,
         _async: bool = False,
+        _overload: str | None = None,
     ):
         raise NotImplementedError("modules are not supported in qi_py")
