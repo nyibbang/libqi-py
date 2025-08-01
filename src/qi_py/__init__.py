@@ -50,6 +50,7 @@ __all__ = [
     "module",
     "listModules",
     "Application",
+    "ApplicationSession",
     "Signal",
     "Property",
     "Session",
@@ -106,3 +107,4 @@ import importlib.metadata
 __version__ = importlib.metadata.version(__name__)
 
 isinstance = _isinstance
+ApplicationSession = Application
