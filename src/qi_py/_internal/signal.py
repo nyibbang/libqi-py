@@ -13,7 +13,11 @@ class Signal(Generic[T]):
         signature: str | Signature = Dynamic,
         onConnect: Callable[[bool], None] | None = None,
     ):
-        self._signature = signature
+        self._signature = (
+            signature
+            if isinstance(signature, Signature)
+            else Signature(signature)
+        )
         self._on_connect = onConnect
         self._subscribers = {}
         self._next_id = 1
