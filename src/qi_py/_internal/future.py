@@ -4,6 +4,7 @@ from functools import partial
 import inspect
 import time
 from typing import Callable, Any, Generic, TypeVar
+from collections.abc import Awaitable
 import weakref
 from ..logging import warning, error
 from .application import event_loop
@@ -124,17 +125,18 @@ def PromiseNoop(*_):
 
 
 class Future(Generic[T]):
-    def __init__(self, value: T | Internal | asyncio.Future):
+    def __init__(self, value: T | Internal | Awaitable[T]):
         """Create a future with a value."""
         if isinstance(value, Internal):
             self._internal = value
             return
 
         future = None
-        if asyncio.isfuture(value):
-            future = value
+        loop = event_loop()
+        if inspect.isawaitable(value):
+            future = asyncio.ensure_future(value, loop=loop)
         else:
-            future = event_loop().create_future()
+            future = loop.create_future()
             future.set_result(value)
         self._internal = Internal(future, lambda: future.cancel())
 
