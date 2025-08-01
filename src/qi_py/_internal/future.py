@@ -388,6 +388,7 @@ def runAsync(
     *args,
     delay: int | float = 0,
     loop: asyncio.AbstractEventLoop | None = None,
+    **kwargs,
 ) -> Future[T]:
     """
     :param callback: the callback that will be called
@@ -399,7 +400,7 @@ def runAsync(
 
     async def sleep_then_invoke_callback():
         await asyncio.sleep(delay)
-        return callback(*args)
+        return callback(*args, **kwargs)
 
     loop = loop or event_loop()
     return Future(loop.create_task(sleep_then_invoke_callback()))
