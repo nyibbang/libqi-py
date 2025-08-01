@@ -10,7 +10,7 @@ T = TypeVar("T")
 class Property(Generic[T]):
     def __init__(self, signature: str | Signature = Dynamic):
         self._signature = signature
-        self._on_change: Signal[T] = Signal(signature)
+        self._on_change = Signal[T](signature)
         self._value: T = make_default_value(signature)  # type: ignore
         self.addCallback = self.connect
 
